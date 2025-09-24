@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Propiedad</title>
+    <!-- <link rel="stylesheet" href="css/style.css"> -->
+         <script src="../js/form.js" defer></script>
+
+
+</head>
+<body>
+    <h1>Registrar Nueva Propiedad</h1>
+
+    <form id="property-form">
+        <div class="inputs">
+            <label for="address">Dirección:</label>
+            <input type="text" id="address" name="address" placeholder="Dirección de la propiedad" required>
+
+            <label for="size">Tamaño:</label>
+            <input type="text" id="size" name="size" placeholder="Ej: 120 m2" required>
+
+            <label for="price">Precio:</label>
+            <input type="text" id="price" name="price" placeholder="Ej: 150000" required>
+
+            <label for="description">Descripción:</label>
+            <textarea id="description" name="description" placeholder="Descripción de la propiedad" required></textarea>
+        </div>
+
+        <button type="submit">Registrar Propiedad</button>
+    </form>
+
+</body>
+</html>
