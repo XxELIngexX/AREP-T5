@@ -47,6 +47,9 @@ La solución se compone de tres capas principales: **Frontend**, **Backend** y *
 3. El backend procesa la lógica de negocio y consulta/actualiza datos en la **base de datos MySQL**.  
 
 
+![](/docs/arquitectura.png)
+
+
 ---
 
 ## Diseño de clases (visión general)
@@ -97,18 +100,23 @@ La solución se compone de tres capas principales: **Frontend**, **Backend** y *
     - `PUT /property/update/{id}` → actualizar
     - `DELETE /property/delete/{id}` → eliminar
 
+
+  
+![](/docs/clases.png)
 ---
 
-
-## instrucciones de implemetnacion
 
 ## Configuración inicial
 1. Instalar **Docker** y **Docker Compose** en tu máquina local.  
 2. Verificar acceso a tu cuenta de **Docker Hub** y **AWS** (credenciales configuradas).  
 3. Clonar el repositorio del proyecto:  
    ```bash
-   git clone <URL_REPO>
-   cd <NOMBRE_PROYECTO>
+   git clone https://github.com/XxELIngexX/AREP-T5.git
+   #para acceder al front
+   cd AREP-T5/propertyManager-front
+
+   #para acceder al back
+   cd AREP-T5/propertyManager
 
 ## Generar imagenes Docker
 ### Base de Datos
@@ -119,44 +127,48 @@ No es necesario construir una imagen personalizada, ya que la oficial ya incluye
 
 1. Crear una instancia EC2 dedicada
   Es recomendable que la base de datos tenga su propia instancia para:
-  - Separar la lógica de negocio (backend) de la persistencia de datos.
-  - Mejorar la seguridad (solo el backend puede acceder a la DB).
-  - Evitar que fallos en el backend impacten directamente en la base de datos.
+    - Separar la lógica de negocio (backend) de la persistencia de datos.
+    - Mejorar la seguridad (solo el backend puede acceder a la DB).
+    - Evitar que fallos en el backend impacten directamente en la base de datos.
   
-  Selecciona una AMI de **Amazon Linux 2** o similar, con al menos **1 vCPU y 1GB RAM**.  
-  Asegúrate de configurar correctamente el **Security Group** para permitir acceso al puerto **3306** únicamente desde la instancia del backend.
+    Selecciona una AMI de **Amazon Linux 2** o similar, con al menos **1 vCPU y 1GB RAM**.  
+    Asegúrate de configurar correctamente el **Security Group** para permitir acceso al puerto **3306** únicamente desde la instancia del backend.
 
+  ![](./docs/ec2sql.png)
 
 2. Instalar Docker en la instancia MySql
    
-  Una vez creada la instancia, conecta por **SSH** y ejecuta los siguientes comandos:
+    Una vez creada la instancia, conecta por **SSH** y ejecuta los siguientes comandos:
+    
+    ```bash
+    # Actualizar los paquetes
+    sudo yum update -y
+    
+    # Habilitar el repositorio de Docker
+    sudo amazon-linux-extras enable docker
+    
+    # Instalar Docker
+    sudo yum install docker -y
+    
+    # Iniciar el servicio Docker
+    sudo service docker start 
+    ```
+  3. Obtener la imagen oficial de MySQL 
   
-  ```bash
-  # Actualizar los paquetes
-  sudo yum update -y
-  
-  # Habilitar el repositorio de Docker
-  sudo amazon-linux-extras enable docker
-  
-  # Instalar Docker
-  sudo yum install docker -y
-  
-  # Iniciar el servicio Docker
-  sudo service docker start 
-  ```
-3. Obtener la imagen oficial de MySQL
-  Con Docker funcionando, descargamos la imagen oficial:
+      Con Docker funcionando, descargamos la imagen oficial:
 
-  ```
-  docker pull mysql:8.1
-  ```
-Esto trae desde Docker Hub la versión estable 8.1 de MySQL.
+      ```
+      docker pull mysql:8.1
+      ```
+      Esto trae desde Docker Hub la versión estable 8.1 de MySQL.
 
 4. Ejecutar el contenedor de MySQL
 
 Ejecutamos un contenedor configurado con las variables de entorno necesarias:
 `MYSQL_ROOT_PASSWORD` → contraseña del usuario root.
+
 `MYSQL_DATABASE` → base de datos inicial creada automáticamente.
+
 `-p 3306:3306` → expone el puerto 3306 para que el backend pueda conectarse.
 ```
 docker run -d --name mysql-server -e MYSQL_ROOT_PASSWORD=admin1234 -e MYSQL_DATABASE=lab05db -e MYSQL_USER=admin -e MYSQL_PASSWORD=admin1234 -p 3306:3306 -v mysql-data:/var/lib/mysql mysql:8.1
@@ -169,21 +181,28 @@ El backend se construye con **Spring Boot** y se despliega como un contenedor Do
 Este servicio expone los endpoints RESTful para gestionar las propiedades y se comunica directamente con la base de datos MySQL en otra instancia.
 
 
-### 1. Compilar el proyecto con Maven
+1. Compilar el proyecto con Maven
 Primero empaquetamos el proyecto en un `.jar` ejecutable:
 
-- Crear la imagen del backend (Spring Boot):
+2. Crear la imagen del backend (Spring Boot):
+
+    El siguiente paso es construir la imagen Docker para el servicio backend. Para ello, se ejecuta:
+
     - docker build -t <usuario_dockerhub>/<backend_image>:latest ./backend
 
 Esto generará un archivo en la carpeta target/ (por ejemplo: lab05-0.0.1-SNAPSHOT.jar) que contendrá la aplicación lista para correr.
 
-- Crear la imagen de la base de datos (MySQL con inicialización si aplica):  
-    - docker build -t <usuario_dockerhub>/<db_image>:latest ./database
+3. Subir las imágenes a Docker Hub:
 
-- Subir las imágenes a Docker Hub:
+    Una vez generadas las imágenes del backend, es necesario publicarlas en Docker Hub para que puedan ser descargadas desde los servidores de AWS. Esto se hace con los siguientes comandos:
+
     - docker push <usuario_dockerhub>/<backend_image>:latest
-    - docker push <usuario_dockerhub>/<db_image>:latest
-  
+
+    De esta manera, las imágenes quedan disponibles de forma remota y pueden ser desplegadas en cualquier instancia de AWS mediante docker pull.
+    
+4. virtualizacion
+
+    A continuación se muestra un ejemplo práctico que resume todo el flujo de empaquetado, construcción de la imagen y despliegue en Docker Hub:
 
    ```bash
    mvn package
@@ -191,9 +210,14 @@ Esto generará un archivo en la carpeta target/ (por ejemplo: lab05-0.0.1-SNAPSH
    docker tag lab05:latest xxelingexx/arep-lab05-back:latest
    docker push xxelingexx/arep-lab05-back:latest
    ```
+
+   En este caso se construye primero el proyecto con Maven, se genera una imagen local llamada lab05, se etiqueta con el nombre del usuario en Docker Hub (xxelingexx/arep-lab05-back:latest) y finalmente se publica en el repositorio remoto para que pueda ejecutarse desde AWS.
+
 ### Crear la instancia EC2 para el backend 
   Se recomienda una instancia Amazon Linux 2 o similar con al menos 2 vCPUs y 2GB de RAM (dependiendo de la carga).
   En el Security Group, habilita el puerto 8080 para recibir las peticiones HTTP del frontend.
+
+  ![](./docs/ec2back.png)
   
   Luego instala Docker en la instancia (mismos pasos que en la sección de base de datos):
   ```
@@ -213,4 +237,12 @@ Esto generará un archivo en la carpeta target/ (por ejemplo: lab05-0.0.1-SNAPSH
   docker pull xxelingexx/arep-lab05-back:latest
   ```
 Con esto, el backend en Spring Boot estará desplegado en AWS, escuchando en el puerto 8080 y conectado de manera segura a la base de datos MySQL en otra instancia.
+
   ---
+
+[![Ver video](https://img.youtube.com/vi/J7XqJcq9PSU/0.jpg)](https://youtu.be/J7XqJcq9PSU)
+
+
+## Evidencias de funcionamiento
+
+A continuación se muestran algunas capturas de pantalla que evidencian el correcto funcionamiento del sistema:
