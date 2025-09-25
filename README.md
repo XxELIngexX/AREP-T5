@@ -246,3 +246,30 @@ Con esto, el backend en Spring Boot estará desplegado en AWS, escuchando en el 
 ## Evidencias de funcionamiento
 
 A continuación se muestran algunas capturas de pantalla que evidencian el correcto funcionamiento del sistema:
+
+1. **Pantalla de inicio y base de datos vacía**  
+   En la pantalla principal, el usuario puede registrarse en la plataforma.  
+   Al mismo tiempo, se observa la base de datos inicializada, sin registros.  
+
+   ![Pantalla de inicio](./docs/index.png)  
+   ![Base de datos vacía](./docs/DbEmpty.png)  
+
+2. **Registro de usuario exitoso**  
+   Una vez registrado, el sistema consulta la base de datos y muestra la información del nuevo usuario: nombre, correo electrónico y la lista de propiedades asociadas (inicialmente vacía).  
+
+   ![Usuario registrado](./docs/usuario.png)  
+
+3. **Registro de propiedades**  
+   El usuario puede registrar nuevas propiedades mediante un formulario.  
+   Al confirmar, la información se guarda en la base de datos y se actualiza la vista del usuario, mostrando todas las propiedades registradas.  
+
+   ![Formulario de propiedad](./docs/propiedad.png)
+   
+     
+   ![Usuario con dos propiedades](./docs/2proerty.png)  
+
+4. **Modificación y eliminación de propiedades**  
+   Cada propiedad cuenta con opciones para editar o eliminar.  
+   En el ejemplo, se eliminó una de las dos propiedades registradas y se verificó el cambio en la base de datos.  
+
+   ![Eliminación de propiedad](./docs/eliminar.png)  
